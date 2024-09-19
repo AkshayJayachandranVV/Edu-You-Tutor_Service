@@ -1,0 +1,31 @@
+{
+  "name": "e-learning-tutor_service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --exec ts-node src/infrastructure/http/server.ts",
+    "dev": "nodemon --exec ts-node src/infrastructure/http/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "amqplib": "^0.10.4",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.14",
+    "nodemon": "^3.1.4"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.5",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^4.17.21",
+    "@types/mongoose": "^5.11.97",
+    "@types/node": "^22.5.1",
+    "@types/nodemailer": "^6.4.15",
+    "ts-node": "^10.9.2"
+  }
+}
