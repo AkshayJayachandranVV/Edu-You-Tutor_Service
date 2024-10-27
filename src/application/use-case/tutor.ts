@@ -1,11 +1,11 @@
 import { TutorRepository } from "../../domain/repositories/TutorRepository";
-import { ITutor, tempId , LoginTutor, tutorMinData, Email, PublicTutorData} from "../../domain/entities/ITutor";
+import { ITutor, tempId,tutorId , LoginTutor, tutorMinData, Email, PublicTutorData,profile} from "../../domain/entities/ITutor";
 import { generateOtp } from "../../utils/generateOtp";
 import { sendOtpEmail } from "../../utils/sendEmail";
 import { TemporaryTutor } from "../../model/TempTutor";
 import bcrypt from "bcryptjs";
 import mongoose, { Document } from "mongoose";
-
+import * as grpc from '@grpc/grpc-js'; 
 
 
 export class TutorService {
@@ -86,7 +86,6 @@ export class TutorService {
     
           const tutorData = temporaryTutor.tutorData;
 
-          console.log()
     
           if (!tutorData) {
             return {
@@ -158,59 +157,142 @@ export class TutorService {
       }
     
 
-      async loginTutor(data: LoginTutor): Promise<{ success: boolean; message: string; tutorData?: PublicTutorData; role?: string }> {
+      // async loginTutor(data: LoginTutor): Promise<{ success: boolean; message: string; tutorData?: PublicTutorData; role?: string }> {
+      //   try {
+      //     const { email, password } = data;
+      
+      //     const tutorData = await this.tutorRepo.checkTutor(email, password);
+      
+      //     console.log(tutorData, "data from tutorRepo");
+      
+      //     if (!tutorData) {
+      //       return { success: false, message: "Email incorrect" };
+      //     }
+      
+      //     // Check if the tutor is blocked
+      //     if (tutorData.isBlocked) {
+      //       return { success: false, message: "User is Blocked" };
+      //     }
+      
+      //     // Check if userData exists and has a password
+      //     const storedPassword = tutorData.password;
+      
+      //     console.log(storedPassword, "stored password in tutorData");
+      
+      //     if (!storedPassword) {
+      //       return { success: false, message: "Password not found for user" };
+      //     }
+      
+      //     const isPassword = await bcrypt.compare(password, storedPassword);
+      
+      //     console.log(isPassword);
+      
+      //     if (!isPassword) {
+      //       console.log("password unmatched");
+      //       return { success: false, message: "Incorrect Password" };
+      //     } else {
+      //       console.log("successfully logged in", tutorData);
+      
+      //       // Remove sensitive data before returning if needed
+      //       const { password, ...tutorDataWithoutPassword } = tutorData;
+      
+      //       return {
+      //         success: true,
+      //         message: "Login successful",
+      //         tutorData: tutorDataWithoutPassword, // Send tutor data without password
+      //         role: "tutor",
+      //       };
+      //     }
+      //   } catch (error) {
+      //     if (error instanceof Error) {
+      //       throw new Error(`Error logging in tutor: ${error.message}`);
+      //     }
+      //     throw error;
+      //   }
+      // }
+      
+
+      async loginTutor({ email, password }: { email: string, password: string }, callback: any): Promise<void> {
         try {
-          const { email, password } = data;
-      
-          const tutorData = await this.tutorRepo.checkTutor(email, password);
-      
-          console.log(tutorData, "data from tutorRepo");
-      
-          if (!tutorData) {
-            return { success: false, message: "Email incorrect" };
-          }
-      
-          // Check if the tutor is blocked
-          if (tutorData.isBlocked) {
-            return { success: false, message: "User is Blocked" };
-          }
-      
-          // Check if userData exists and has a password
-          const storedPassword = tutorData.password;
-      
-          console.log(storedPassword, "stored password in tutorData");
-      
-          if (!storedPassword) {
-            return { success: false, message: "Password not found for user" };
-          }
-      
-          const isPassword = await bcrypt.compare(password, storedPassword);
-      
-          console.log(isPassword);
-      
-          if (!isPassword) {
-            console.log("password unmatched");
-            return { success: false, message: "Incorrect Password" };
-          } else {
-            console.log("successfully logged in", tutorData);
-      
-            // Remove sensitive data before returning if needed
-            const { password, ...tutorDataWithoutPassword } = tutorData;
-      
-            return {
-              success: true,
-              message: "Login successful",
-              tutorData: tutorDataWithoutPassword, // Send tutor data without password
-              role: "tutor",
+            // Check if tutor exists
+            console.log(email,password)
+            const tutorData: any = await this.tutorRepo.checkTutor(email, password);
+            console.log(tutorData, "data from tutorRepo");
+    
+            if (!tutorData) {
+                return callback(null, {
+                    success: false,
+                    message: "Email incorrect"
+                });
+            }
+    
+            // Check if the tutor is blocked
+            if (tutorData.isBlocked) {
+                return callback(null, {
+                    success: false,
+                    message: "Tutor is blocked"
+                });
+            }
+    
+            // Check if tutorData exists and has a password
+            const storedPassword = tutorData.password;
+            if (!storedPassword) {
+                return callback(null, {
+                    success: false,
+                    message: "Password not found for tutor"
+                });
+            }
+    
+            const isPasswordMatch = await bcrypt.compare(password, storedPassword);
+            if (!isPasswordMatch) {
+                return callback(null, {
+                    success: false,
+                    message: "Incorrect Password"
+                });
+            }
+    
+            // Prepare the tutorData response, excluding sensitive information
+            const tutorDataResponse = {
+                id: tutorData._id.toString(),         // Convert MongoDB ObjectId to string
+                tutorname: tutorData.tutorname,
+                email: tutorData.email,
+                phone: tutorData.phone,
+                profile_picture: tutorData.profile_picture,
+                about: tutorData.about,
+                createdAt: tutorData.createdAt ? tutorData.createdAt.toISOString() : null, // Check if createdAt is defined
+                myCourse: tutorData.courses.map((course: any) => ({
+                    courseId: course.courseId.toString(), // Convert ObjectId to string
+                    date: course.date ? course.date.toISOString() : null // Check if date is defined
+                }))
             };
-          }
+    
+            // Debugging log before callback
+            console.log("Returning response:", {
+                success: true,
+                message: "Login successful",
+                role: "tutor",
+                tutorData: tutorDataResponse
+            });
+    
+            // Return success response
+            return callback(null, {
+                success: true,
+                message: "Login successful",
+                role: "tutor",
+                tutorData: tutorDataResponse  // The transformed tutor data
+            });
+    
         } catch (error) {
-          if (error instanceof Error) {
-            throw new Error(`Error logging in tutor: ${error.message}`);
-          }
-          throw error;
+            console.error("Error logging in tutor:", error);
+    
+            // Handle error and return internal error response
+            return callback({
+                code: grpc.status.INTERNAL,
+                message: error instanceof Error ? error.message : 'Unknown error occurred',
+            });
         }
-      }
+    }
+    
       
 
 
@@ -399,12 +481,97 @@ async isBlocked(data: Email): Promise<any> {
 }
 
 
+async editProfile(data: profile): Promise<any> {
+  try {
+      console.log(data, "data in edit profile");
+      // let profile_pic_url: string = '';
 
+      // Ensure profile_picture is a file object with a buffer
+      
+      if(data && !data.data){
+        return null
+      }
+
+      // console.log(profile_pic_url, 'Profile picture URL after upload');
+
+      // Extract relevant fields from `data.data`
+      const { tutorname, email, phone, about,profile_picture} = data.data;
+
+      console.log(tutorname, email, phone, about,profile_picture);
+
+      // Update the user profile with the provided data (image is now the S3 key)
+      let user = await this.tutorRepo.editProfile({ tutorname, email, phone, about, image: profile_picture });
+
+      console.log("Check value updated or not", user);
+
+      // Update the profile_picture field with the new profile_pic_url before sending to frontend
+      
+
+      return user; // Send updated user data with the profile_picture URL
+
+  } catch (error) {
+      if (error instanceof Error) {
+          throw new Error(`Error editing profile: ${error.message}`);
+      }
+      throw error;
+  }
+}
+
+
+async tutorDetails(data:tutorId ): Promise<any> {
+  try {
+      console.log(data, "data in students list");
+      const {tutorId} = data
+      
+      const tutorDetails = await this.tutorRepo.tutorDetails(tutorId);
+      return tutorDetails;
+
+  } catch (error) {
+      if (error instanceof Error) {
+          throw new Error(`Error editing profile: ${error.message}`);
+      }
+      throw error;
+  }
+}
+
+async addCourseStudents(data:any ): Promise<any> {
+  try {
+      console.log(data, "data in students list");
+      
+      const tutorDetails = await this.tutorRepo.addCourseStudents(data);
+      return tutorDetails;
+
+  } catch (error) {
+      if (error instanceof Error) {
+          throw new Error(`Error editing profile: ${error.message}`);
+      }
+      throw error;
+  }
+}
+
+
+async courseStudents(data: { courseId: string }): Promise<any> {
+  try {
+    console.log(data, "data in students list"); // Check if data is correctly logged as an object
+    const { courseId } = data;
+    console.log(courseId)
+    const studentslist = await this.tutorRepo.courseStudents( courseId ); // Pass as an object
+    return {success:true,students:studentslist};
+
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Error editing profile: ${error.message}`);
+    }
+    throw error;
+  }
 }
 
 
 
+}
 
+
+    
 
 
 

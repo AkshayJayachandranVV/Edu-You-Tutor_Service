@@ -1,5 +1,5 @@
 import {ITutorRepository} from './ITutorRepository';
-import {ITutor, ITemporaryTutor} from '../entities/ITutor'
+import {ITutor, ITemporaryTutor,PublicTutorData} from '../entities/ITutor'
 import { Tutor } from "../../model/Tutor";
 import {TemporaryTutor} from '../../model/TempTutor'
 import bcrypt from 'bcryptjs';
@@ -88,7 +88,7 @@ export class TutorRepository implements ITutorRepository {
 
     async checkTutor(email : string, password : string): Promise< ITutor | null >{
         try {
-              console.log('login user in userrepository reached')
+              console.log('login user in userrepository reached',email)
               const tutorData = await Tutor.findOne({email : email}) 
 
               console.log(tutorData)
@@ -203,5 +203,124 @@ async isBlocked(email: string): Promise<{ success: boolean; message: string }> {
     }
 }
 
+
+
+async editProfile(tutor: PublicTutorData) : Promise<ITutor| null> {
+    try {
+        console.log('edit profile  in userrepository reached')
+
+        const {tutorname,email,phone,about, image} = tutor;
+      
+        let updateProfile = await Tutor.updateOne({ email : email },{$set:{tutorname,phone,about,profile_picture:image}}).exec();
+
+        console.log(updateProfile)
+
+        const tutorData = await Tutor.findOne({ email: email }).select('-password');
+
+
+        console.log(tutorData)
+
+        return tutorData
+        
+    } catch (error) {
+        console.log("error in save userRepo")
+        const err = error as Error;
+        throw new Error(`Error finding temporary user by tempId ${err.message}`);
+        
+    }
 }
+
+
+async tutorDetails(tutorId: string): Promise<ITutor | null> {
+    try{
+        console.log('reachd userRepository id',tutorId);
+        const tutor = await Tutor.findOne({_id:tutorId}).exec()
+        return tutor
+    }catch(error){
+        const err = error as Error;
+        throw new Error(`Error finding user by email ${err.message} `)
+    }
+}
+
+
+async addCourseStudents(data: any): Promise<any> {
+    try {
+        const { tutorId, userId, courseId } = data;
+        console.log('Reached addCourseStudents with data:', data);
+
+        // Find the tutor by tutorId
+        const tutor = await Tutor.findById(tutorId);
+
+        if (!tutor) {
+            throw new Error('Tutor not found');
+        }
+
+        if (!tutor.courses) {
+            tutor.courses = [];
+        }
+
+        // Check if the course already exists in the tutor's courses array
+        const courseIndex = tutor.courses.findIndex((course: any) => course.courseId.toString() === courseId);
+
+        if (courseIndex > -1) {
+            // Course already exists, check if the student is already in the students array
+            const studentsArray = tutor.courses[courseIndex].students;
+
+            if (!studentsArray.includes(userId)) {
+                // If student is not already enrolled, add the studentId
+                studentsArray.push(userId);
+            } else {
+                console.log('Student is already enrolled in the course');
+            }
+        } else {
+            // Course does not exist, add a new course object with courseId and the studentId in students array
+            tutor.courses.push({
+                courseId,
+                students: [userId]  // Add the studentId to the students array
+            });
+        }
+
+        // Save the updated tutor document
+        const updatedTutor = await tutor.save();
+        console.log('Updated tutor:', updatedTutor);
+
+        return updatedTutor;
+    } catch (error) {
+        const err = error as Error;
+        console.error('Error in addCourseStudents:', err.message);
+        throw new Error(`Error adding student to course: ${err.message}`);
+    }
+}
+
+
+
+
+async courseStudents( courseId: string ): Promise<{ students: string[] } | null> {
+    console.log('Reached userRepository with courseId:', courseId); // Verify the value
+  
+    try {
+      const tutor = await Tutor.findOne(
+        { 'courses.courseId': courseId }, // Use courseId in the query
+        { 'courses.$': 1 } // Project only the specific course with the matching courseId
+      ).exec();
+  
+      if (tutor && tutor.courses?.[0]?.students) {
+        const studentIds = tutor.courses[0].students.map((studentId) => studentId.toString());
+        return { students: studentIds };
+      }
+  
+      return null;
+    } catch (error) {
+      const err = error as Error;
+      throw new Error(`Error fetching students by courseId: ${err.message}`);
+    }
+  }
+  
+
+
+
+}
+
+
+
 

@@ -2,7 +2,7 @@ import express from 'express'
 import config from  '../config/config'
 import RabbitMQClient from '../rabbitMQ/client'
 import { databaseConnection } from '../database/mongodb'
-
+import { startGrpcServer } from '../grpc/client/grpcServer';
 
 const app = express()
 app.use(express.json())
@@ -14,6 +14,8 @@ const startServer = async () =>{
         console.log(" TUTOR SERVER STARTING ------")
 
         await databaseConnection();
+
+        startGrpcServer();
 
         RabbitMQClient.initialize()
 
