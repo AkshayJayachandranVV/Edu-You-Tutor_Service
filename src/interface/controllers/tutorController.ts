@@ -1,5 +1,5 @@
 import {TutorService} from "../../application/use-case/tutor";
-import {ITutor, registerData , tempId , LoginTutor, Email} from "../../domain/entities/ITutor";
+import {ITutor, registerData , tempId , tutorId, Email} from "../../domain/entities/ITutor";
 import * as grpc from '@grpc/grpc-js';
 
 class TutorController {
@@ -286,7 +286,33 @@ class TutorController {
         }
 
     }
+   
 
+    async cardsData(data:tutorId){
+        try{
+            console.log(data, "tutor details ");
+
+            const result = await this.tutorService.cardsData(data)
+
+            return result
+        }catch(error){
+            console.log("error in login user usercontroller", error);
+        }
+
+    }
+
+
+    async tutorPieGraph(data:tutorId){
+        try{
+            console.log(data, "tutor details ");
+
+            const result = await this.tutorService.tutorPieGraph(data)
+            return result
+        }catch(error){
+            console.log("error in login user usercontroller", error);
+        }
+
+    }
 
 }
 

@@ -86,7 +86,18 @@ export default class MessageHandlers {
                 response = await tutorController.courseStudents(data)
                 console.log("data reached ",response);
                 break;
-                                           
+
+            case 'tutor-cards-data' :
+                console.log('Handling operation',operations,data)
+                response = await tutorController.cardsData(data)
+                console.log("data reached ",response);
+                break;     
+                
+            case 'tutor-piegraph-data' :
+                console.log('Handling operation',operations,data)
+                response = await tutorController.tutorPieGraph(data)
+                console.log("data reached ",response);
+                break; 
 
         }
 
@@ -94,6 +105,8 @@ export default class MessageHandlers {
 
     }
 }
+
+
 
 
 

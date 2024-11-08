@@ -3,6 +3,7 @@ import {ITutor, ITemporaryTutor,PublicTutorData} from '../entities/ITutor'
 import { Tutor } from "../../model/Tutor";
 import {TemporaryTutor} from '../../model/TempTutor'
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 
 
 export class TutorRepository implements ITutorRepository {
@@ -318,8 +319,89 @@ async courseStudents( courseId: string ): Promise<{ students: string[] } | null>
   
 
 
+  async cardsData(tutorId: string) {
+    console.log('Reached userRepository with tutorId:', tutorId);
+
+    try {
+        // Convert tutorId to ObjectId to ensure it is correctly formatted for MongoDB.
+        const result = await Tutor.aggregate([
+            { $match: { _id: new mongoose.Types.ObjectId(tutorId) } },
+
+            {
+                $project: {
+                    _id: 0,
+                    totalCourses: { $size: "$courses" }, // Count courses in the courses array
+                    totalStudents: {
+                        $sum: {
+                            $map: {
+                                input: "$courses",
+                                as: "course",
+                                in: { $size: "$$course.students" }
+                            }
+                        }
+                    }
+                }
+            }
+        ]);
+
+        console.log("Aggregation result:", result);
+
+        // Return 0 if result array is empty
+        return {
+            totalCourses: result[0]?.totalCourses || 0,
+            totalStudents: result[0]?.totalStudents || 0
+        };
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        if (error instanceof Error) {
+            throw new Error(`Error fetching data for tutorId ${tutorId}: ${error.message}`);
+        }
+        throw error;
+    }
+}
+
+
+
+async  tutorPieGraph(tutorId: string) {
+    console.log('Reached userRepository with tutorId:', tutorId);
+    try {
+        const results = await Tutor.aggregate([
+            {
+                $match: { _id: new mongoose.Types.ObjectId(tutorId) }, // Match the specified tutorId
+            },
+            {
+                $project: {
+                    courses: {
+                        $map: {
+                            input: "$courses", // Loop over each course
+                            as: "course",
+                            in: {
+                                courseId: "$$course.courseId", // Extract courseId
+                                totalStudents: { $size: "$$course.students" } // Count students for each course
+                            }
+                        }
+                    }
+                }
+            }
+        ]);
+
+        console.log("Total students per course:", results[0].courses);
+        return results[0].courses; // Return the array of courses with total students
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        if (error instanceof Error) {
+            throw new Error(`Error fetching data for tutorId ${tutorId}: ${error.message}`);
+        }
+        throw error;
+    }
+}
+
+
+
 
 }
+
+
 
 
 

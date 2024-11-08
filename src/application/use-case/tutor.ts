@@ -1,5 +1,5 @@
 import { TutorRepository } from "../../domain/repositories/TutorRepository";
-import { ITutor, tempId,tutorId , LoginTutor, tutorMinData, Email, PublicTutorData,profile} from "../../domain/entities/ITutor";
+import { ITutor, tempId,tutorId , LoginTutor, tutorMinData, Email,profile} from "../../domain/entities/ITutor";
 import { generateOtp } from "../../utils/generateOtp";
 import { sendOtpEmail } from "../../utils/sendEmail";
 import { TemporaryTutor } from "../../model/TempTutor";
@@ -567,11 +567,64 @@ async courseStudents(data: { courseId: string }): Promise<any> {
 }
 
 
+async cardsData(data: tutorId): Promise<any> {
+  try {
+      console.log(data, "data in cardsData list"); // Check if data is correctly logged as an object
+      const { tutorId } = data;
+
+      // Verify if tutorId is valid before proceeding
+      if (!tutorId) {
+          throw new Error("Tutor ID is missing.");
+      }
+
+      console.log("Tutor ID extracted:", tutorId);
+
+      // Pass `tutorId` directly, assuming `cardsData` expects a string parameter.
+      const cardsData = await this.tutorRepo.cardsData(tutorId);
+      console.log(cardsData, "final data ---------------------------------");
+
+      return cardsData;
+  } catch (error) {
+      if (error instanceof Error) {
+          throw new Error(`Error fetching cards data: ${error.message}`);
+      }
+      throw error;
+  }
+}
+
+
+
+async tutorPieGraph(data:tutorId): Promise<any> {
+  try {
+      console.log(data, "data in cardsData list"); // Check if data is correctly logged as an object
+      const { tutorId } = data;
+
+      // Verify if tutorId is valid before proceeding
+      if (!tutorId) {
+          throw new Error("Tutor ID is missing.");
+      }
+
+      console.log("Tutor ID extracted:", tutorId);
+
+      // Pass `tutorId` directly, assuming `cardsData` expects a string parameter.
+      const cardsData = await this.tutorRepo.tutorPieGraph(tutorId);
+      console.log(cardsData, "final data ---------------------------------");
+
+      return cardsData;
+  } catch (error) {
+      if (error instanceof Error) {
+          throw new Error(`Error fetching cards data: ${error.message}`);
+      }
+      throw error;
+  }
+}
+
+
 
 }
 
 
-    
+
 
 
 
