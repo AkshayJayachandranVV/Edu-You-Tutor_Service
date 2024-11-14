@@ -314,6 +314,20 @@ class TutorController {
 
     }
 
+
+    async adminPayout(data:any){
+        try{
+            console.log(data, "tutor details ");
+
+            const result = await this.tutorService.adminPayout(data)
+            return result
+        }catch(error){
+            console.log("error in login user usercontroller", error);
+        }
+
+    }
+
+
 }
 
 export const tutorController = new TutorController()   

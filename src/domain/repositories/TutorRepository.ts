@@ -398,6 +398,36 @@ async  tutorPieGraph(tutorId: string) {
 
 
 
+async adminPayout(data: Array<{ tutorId: string; [key: string]: any }>) {
+    console.log('Reached userRepository with tutorId array:', data);
+    try {
+        // Map over each item in data array and add tutor name
+        const addedData = await Promise.all(data.map(async (item) => {
+            // Fetch tutor document from the database using tutorId
+            const tutor = await Tutor.findOne({ _id: item.tutorId });
+
+            // Check if tutor exists and add tutorName to the item, or set to "Unknown" if not found
+            if (tutor) {
+                item.tutorName = tutor.tutorname;
+            } else {
+                item.tutorName = "Unknown";
+            }
+
+            // Return the updated item with tutorName
+            return item;
+        }));
+
+        return addedData;
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        if (error instanceof Error) {
+            throw new Error(`Error fetching data for tutorId : ${error.message}`);
+        }
+        throw error;
+    }
+}
+
+
 
 }
 

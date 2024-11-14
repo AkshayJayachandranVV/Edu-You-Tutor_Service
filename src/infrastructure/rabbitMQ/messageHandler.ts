@@ -99,6 +99,12 @@ export default class MessageHandlers {
                 console.log("data reached ",response);
                 break; 
 
+            case 'admin-payout-tutor' :
+                console.log('Handling operation',operations,data)
+                response = await tutorController.adminPayout(data)
+                console.log("data reached ",response);
+                break; 
+
         }
 
         await RabbitMQClient.produce(response,correlationId,replyTo)

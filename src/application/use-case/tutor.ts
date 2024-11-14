@@ -620,6 +620,25 @@ async tutorPieGraph(data:tutorId): Promise<any> {
 }
 
 
+async adminPayout(data:any): Promise<any> {
+  try {
+      console.log(data, "data in cardsData list"); // Check if data is correctly logged as an object
+      const { tutorId } = data;
+
+      // Pass `tutorId` directly, assuming `cardsData` expects a string parameter.
+      const cardsData = await this.tutorRepo.adminPayout(data);
+      console.log(cardsData, "final data ---------------------------------");
+
+      return cardsData;
+  } catch (error) {
+      if (error instanceof Error) {
+          throw new Error(`Error fetching cards data: ${error.message}`);
+      }
+      throw error;
+  }
+}
+
+
 
 }
 
