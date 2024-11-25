@@ -1,5 +1,5 @@
 import {ITutorRepository} from './ITutorRepository';
-import {ITutor, ITemporaryTutor,PublicTutorData} from '../entities/ITutor'
+import {ITutor, ITemporaryTutor,PublicTutorData,TutorAdditionalInfoPayload,tutorId} from '../entities/ITutor'
 import { Tutor } from "../../model/Tutor";
 import {TemporaryTutor} from '../../model/TempTutor'
 import bcrypt from 'bcryptjs';
@@ -151,16 +151,18 @@ async googleSave(tutor: ITutor) : Promise<ITutor> {
 }
 
 
-async totalTutors() : Promise<ITutor[]| null> {
+async totalTutors(data:any) : Promise<any> {
     try {
         console.log(' total tutors  in tutorrepository reached')
 
-      
-        let tutorsData = await Tutor.find({}).exec();
+        const {skip,limit} = data
+        let tutorsData = await Tutor.find({}).skip(skip).limit(limit).exec();
+
+        const totalCount = await Tutor.countDocuments();
 
         console.log(tutorsData)
 
-        return tutorsData
+        return {totalCount,tutors:tutorsData}
         
     } catch (error) {
         console.log("error in save userRepo")
@@ -206,30 +208,71 @@ async isBlocked(email: string): Promise<{ success: boolean; message: string }> {
 
 
 
-async editProfile(tutor: PublicTutorData) : Promise<ITutor| null> {
+async editProfile(tutor: any): Promise<any> {
     try {
-        console.log('edit profile  in userrepository reached')
+        console.log('edit profile in userrepository reached');
 
-        const {tutorname,email,phone,about, image} = tutor;
-      
-        let updateProfile = await Tutor.updateOne({ email : email },{$set:{tutorname,phone,about,profile_picture:image}}).exec();
+        const { name, email, phone, about, qualifications, profile_picture, cv } = tutor;
 
-        console.log(updateProfile)
+        // Helper function to extract the S3 key from a URL
+        const extractS3Key = (url: string): string => {
+            const match = url.match(/uploads\/.+$/);
+            return match ? match[0] : ''; // Return the key or an empty string if not found
+        };
 
-        const tutorData = await Tutor.findOne({ email: email }).select('-password');
+        // Parse qualifications and extract keys
+        let qualificationsData = [];
+        if (typeof qualifications === 'string') {
+            try {
+                // Ensure qualifications are parsed correctly
+                const parsedQualifications = JSON.parse(qualifications);
 
+                qualificationsData = parsedQualifications.map((qual: any) => ({
+                    qualification: qual.title,
+                    certificate: extractS3Key(qual.fileKey), // Reference 'fileKey' instead of 'fileUrl'
+                }));
+            } catch (error) {
+                throw new Error('Invalid qualifications format');
+            }
+        } else if (Array.isArray(qualifications)) {
+            qualificationsData = qualifications.map((qual: any) => ({
+                qualification: qual.title,
+                certificate: extractS3Key(qual.fileKey), // Reference 'fileKey' instead of 'fileUrl'
+            }));
+        } else {
+            throw new Error('Qualifications must be an array or a JSON string');
+        }
 
-        console.log(tutorData)
+        // Prepare the update payload with extracted keys
+        const updatePayload: any = {
+            tutorname: name,
+            phone,
+            about,
+            qualifications: qualificationsData,
+            profile_picture: extractS3Key(profile_picture), // Extract S3 key for profile picture
+            cv: extractS3Key(cv), // Extract S3 key for CV
+        };
 
-        return tutorData
-        
+        // Update tutor profile in the database
+        const updateProfile = await Tutor.updateOne({ email }, { $set: updatePayload }).exec();
+
+        console.log('Profile updated:', updateProfile);
+
+        // Fetch the updated tutor data (excluding password)
+        const tutorData = await Tutor.findOne({ email }).select('-password');
+
+        console.log('Fetched updated tutor data:', tutorData);
+
+        return tutorData;
     } catch (error) {
-        console.log("error in save userRepo")
-        const err = error as Error;
-        throw new Error(`Error finding temporary user by tempId ${err.message}`);
-        
+        console.error('Error in save userRepo:', error);
+        throw new Error(`Error updating tutor profile:`);
     }
 }
+
+
+
+
 
 
 async tutorDetails(tutorId: string): Promise<ITutor | null> {
@@ -301,8 +344,8 @@ async courseStudents( courseId: string ): Promise<{ students: string[] } | null>
   
     try {
       const tutor = await Tutor.findOne(
-        { 'courses.courseId': courseId }, // Use courseId in the query
-        { 'courses.$': 1 } // Project only the specific course with the matching courseId
+        { 'courses.courseId': courseId }, 
+        { 'courses.$': 1 } 
       ).exec();
   
       if (tutor && tutor.courses?.[0]?.students) {
@@ -346,7 +389,7 @@ async courseStudents( courseId: string ): Promise<{ students: string[] } | null>
 
         console.log("Aggregation result:", result);
 
-        // Return 0 if result array is empty
+      
         return {
             totalCourses: result[0]?.totalCourses || 0,
             totalStudents: result[0]?.totalStudents || 0
@@ -362,8 +405,9 @@ async courseStudents( courseId: string ): Promise<{ students: string[] } | null>
 
 
 
-async  tutorPieGraph(tutorId: string) {
+async tutorPieGraph(tutorId: string) {
     console.log('Reached userRepository with tutorId:', tutorId);
+
     try {
         const results = await Tutor.aggregate([
             {
@@ -377,13 +421,20 @@ async  tutorPieGraph(tutorId: string) {
                             as: "course",
                             in: {
                                 courseId: "$$course.courseId", // Extract courseId
-                                totalStudents: { $size: "$$course.students" } // Count students for each course
+                                totalStudents: {
+                                    $size: { $ifNull: ["$$course.students", []] } // Use $ifNull to default to an empty array
+                                }
                             }
                         }
                     }
                 }
             }
         ]);
+
+        if (!results || results.length === 0) {
+            console.warn("No data found for tutorId:", tutorId);
+            return [];
+        }
 
         console.log("Total students per course:", results[0].courses);
         return results[0].courses; // Return the array of courses with total students
@@ -427,6 +478,48 @@ async adminPayout(data: Array<{ tutorId: string; [key: string]: any }>) {
     }
 }
 
+
+
+async  addInformation(data: TutorAdditionalInfoPayload): Promise<any> {
+    try {
+      const { id: id, profilePicture, bio, cv, expertise, qualifications } = data;
+  
+      // Update the Tutor document with new data based on _id
+      const updatedTutor = await Tutor.findByIdAndUpdate(
+        id,
+        {
+          profile_picture: profilePicture,
+          bio,
+          cv,
+          expertise,
+          qualifications,
+        },
+        { new: true, runValidators: true, upsert: false }
+      );
+  
+      if (!updatedTutor) {
+        throw new Error("Tutor not found");
+      }
+  
+      return updatedTutor;
+    } catch (error) {
+      const err = error as Error;
+      throw new Error(`Error updating tutor information: ${err.message}`);
+    }
+  }
+
+
+
+  async  fetchProfile(data: tutorId): Promise<any> {
+    try {
+        const {tutorId} = data
+        const tutor = await Tutor.findOne({_id:tutorId}).select('-password').exec()
+        return tutor
+    } catch (error) {
+      const err = error as Error;
+      throw new Error(`Error updating tutor information: ${err.message}`);
+    }
+  }
 
 
 }

@@ -3,7 +3,7 @@ import { ITutor } from "../domain/entities/ITutor";
 
 export interface ITutorDocument extends ITutor, Document {}
 
-// Define the Tutor schema
+
 const TutorSchema: Schema = new Schema({
     tutorname: {
         type: String,
@@ -22,7 +22,7 @@ const TutorSchema: Schema = new Schema({
         required: true
     },
     profile_picture: {
-        type: String
+        type: String 
     },
     createdAt: {
         type: Date,
@@ -35,18 +35,36 @@ const TutorSchema: Schema = new Schema({
     isBlocked: {
         type: Boolean
     },
-    // Add the Courses array
     courses: [{
         courseId: {
-            type: mongoose.Schema.Types.ObjectId,  // Assuming courseId is an ObjectId from a Course model
-            ref: 'Course',  // Reference the Course model if available
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Course',
             required: true
         },
         students: [{
-            type: mongoose.Schema.Types.ObjectId,  // Assuming studentId is an ObjectId from a Student model
-            ref: 'Student'  // Reference the Student model if available
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Student'
         }]
-    }]
+    }],
+    
+    expertise: [{
+        type: String
+    }],
+    qualifications: [{
+        qualification: {
+            type: String,
+            required: true
+        },
+        certificate: {
+            type: String 
+        }
+    }],
+    bio: {
+        type: String
+    },
+    cv: {
+        type: String 
+    }
 });
 
 // Create the Tutor model

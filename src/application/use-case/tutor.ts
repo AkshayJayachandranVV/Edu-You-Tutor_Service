@@ -1,5 +1,5 @@
 import { TutorRepository } from "../../domain/repositories/TutorRepository";
-import { ITutor, tempId,tutorId , LoginTutor, tutorMinData, Email,profile} from "../../domain/entities/ITutor";
+import { ITutor, tempId,tutorId , LoginTutor, tutorMinData, Email,profile,TutorAdditionalInfoPayload} from "../../domain/entities/ITutor";
 import { generateOtp } from "../../utils/generateOtp";
 import { sendOtpEmail } from "../../utils/sendEmail";
 import { TemporaryTutor } from "../../model/TempTutor";
@@ -452,7 +452,7 @@ async totalTutors(data: any): Promise<ITutor[]| null> {
   try {
       console.log(data, "data in students list");
       
-      const tutors = await this.tutorRepo.totalTutors();
+      const tutors = await this.tutorRepo.totalTutors(data);
       return tutors;
 
   } catch (error) {
@@ -481,7 +481,7 @@ async isBlocked(data: Email): Promise<any> {
 }
 
 
-async editProfile(data: profile): Promise<any> {
+async editProfile(data: any): Promise<any> {
   try {
       console.log(data, "data in edit profile");
       // let profile_pic_url: string = '';
@@ -500,7 +500,7 @@ async editProfile(data: profile): Promise<any> {
       console.log(tutorname, email, phone, about,profile_picture);
 
       // Update the user profile with the provided data (image is now the S3 key)
-      let user = await this.tutorRepo.editProfile({ tutorname, email, phone, about, image: profile_picture });
+      let user = await this.tutorRepo.editProfile(data.data);
 
       console.log("Check value updated or not", user);
 
@@ -640,10 +640,41 @@ async adminPayout(data:any): Promise<any> {
 
 
 
+async addInformation(data:TutorAdditionalInfoPayload): Promise<any> {
+  try {
+      console.log(data, "data in add infpr list"); 
+
+      const storeInfo = await this.tutorRepo.addInformation(data);
+      console.log(storeInfo, "final data ---------------------------------");
+
+      return storeInfo;
+  } catch (error) {
+      if (error instanceof Error) {
+          throw new Error(`Error fetching cards data: ${error.message}`);
+      }
+      throw error;
+  }
 }
 
 
+async fetchProfile(data:tutorId): Promise<any> {
+  try {
+      console.log(data, "data in add infpr list"); 
 
+      const profile = await this.tutorRepo.fetchProfile(data);
+      console.log(profile, "final data ---------------------------------");
+
+      return profile;
+  } catch (error) {
+      if (error instanceof Error) {
+          throw new Error(`Error fetching cards data: ${error.message}`);
+      }
+      throw error;
+  }
+}
+
+
+}
 
 
 

@@ -94,3 +94,38 @@ export interface Email{
 export interface Email {
   email:string
 }
+
+
+
+export interface TutorAdditionalInfoPayload {
+  id: string; 
+  profilePicture: string | null;
+  bio: string;
+  cv: string | null;
+  expertise: string[];
+  qualifications: Qualification[];
+}
+
+export interface Qualification {
+  qualification: string;
+  certificate: string | null;
+}
+
+
+export interface Qualification2 {
+  title: string;
+  file: File | null;
+  fileUrl: string;
+}
+
+export interface FormDataPayload {
+  name: string;
+  email: string;
+  phone: string;
+  about: string;
+  qualifications: Qualification2[]; // Array of qualifications
+  profile_picture?: string; // Optional, since it's only appended if available
+  cv?: string; // Optional, since it's only appended if available
+  profileImageFile?: File; // Optional, file input for profile image
+  cvFile?: File; 
+}

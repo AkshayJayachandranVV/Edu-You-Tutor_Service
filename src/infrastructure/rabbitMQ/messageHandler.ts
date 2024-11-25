@@ -105,6 +105,18 @@ export default class MessageHandlers {
                 console.log("data reached ",response);
                 break; 
 
+            case 'tutor-add-Information' :
+                console.log('Handling operation',operations,data)
+                response = await tutorController.addInformation(data)
+                console.log("data reached ",response);
+                break; 
+
+            case 'fetch-tutor-data' :
+                console.log('Handling operation',operations,data)
+                response = await tutorController.fetchProfile(data)
+                console.log("data reached ",response);
+                break; 
+
         }
 
         await RabbitMQClient.produce(response,correlationId,replyTo)

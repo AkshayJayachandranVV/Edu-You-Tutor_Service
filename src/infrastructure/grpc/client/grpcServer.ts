@@ -29,8 +29,8 @@ server.addService(tutorProto.TutorService.service, {
 });
 
 const startGrpcServer = () => {
-    const grpcPort = config.grpcPort || 4001; // Assign port 4001 or from config
-    server.bindAsync(`0.0.0.0:${grpcPort}`, grpc.ServerCredentials.createInsecure(), (err, bindPort) => {
+    const grpcPort = config.grpcPort ; // Assign port 4001 or from config
+    server.bindAsync(`0.0.0.0:40002`, grpc.ServerCredentials.createInsecure(), (err, bindPort) => {
         if (err) {
             console.error("Failed to start gRPC server:", err);
         } else {

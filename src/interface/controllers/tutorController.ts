@@ -1,5 +1,5 @@
 import {TutorService} from "../../application/use-case/tutor";
-import {ITutor, registerData , tempId , tutorId, Email} from "../../domain/entities/ITutor";
+import {ITutor, TutorAdditionalInfoPayload , tempId , tutorId, Email} from "../../domain/entities/ITutor";
 import * as grpc from '@grpc/grpc-js';
 
 class TutorController {
@@ -320,6 +320,31 @@ class TutorController {
             console.log(data, "tutor details ");
 
             const result = await this.tutorService.adminPayout(data)
+            return result
+        }catch(error){
+            console.log("error in login user usercontroller", error);
+        }
+
+    }
+
+
+    async addInformation(data:TutorAdditionalInfoPayload){
+        try{
+            console.log(data, "tutor details ");
+
+            const result = await this.tutorService.addInformation(data)
+            return result
+        }catch(error){
+            console.log("error in login user usercontroller", error);
+        }
+
+    }
+
+    async fetchProfile(data:tutorId){
+        try{
+            console.log(data, "tutor details ");
+
+            const result = await this.tutorService.fetchProfile(data)
             return result
         }catch(error){
             console.log("error in login user usercontroller", error);
