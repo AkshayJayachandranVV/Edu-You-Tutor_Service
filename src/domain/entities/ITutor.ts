@@ -1,16 +1,18 @@
 import mongoose, {Document,Types} from "mongoose";
 
 
-// export interface ITutor {
-//     tutorname: string;
-//     email: string;
-//     phone?: string;
-//     password: string;
-//     profile_picture?: string;
-//     created_At?: Date;
-//     image?: { buffer: Buffer; originalname: string } | string;
-//     isBlocked?:boolean;
-//   }
+export interface FetchTutorRequest {
+  courseId: string; // The tutor ID to fetch
+}
+
+
+export interface FetchTutorResponse {
+  tutors: {
+    name: string;
+    profile_picture: string; // S3 signed URL
+    expertise: string;
+  }[];
+}
 
 export interface ITutor {
   tutorname: string;
@@ -25,6 +27,7 @@ export interface ITutor {
       courseId: Types.ObjectId; // Assuming courseId is an ObjectId
       students: Types.ObjectId[]; // Array of student ObjectIds
   }[];
+  expertise: string[];
 }
 
 

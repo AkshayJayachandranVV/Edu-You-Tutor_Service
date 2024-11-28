@@ -26,11 +26,12 @@ server.addService(tutorProto.TutorService.service, {
     register: tutorController.registerTutor.bind(tutorController),
     verifyOtp: tutorController.verifyOtp.bind(tutorController),
     googleLogin: tutorController.googleLoginTutor.bind(tutorController),
+    fetchTutor: tutorController.fetchTutor.bind(tutorController),
 });
 
 const startGrpcServer = () => {
     const grpcPort = config.grpcPort ; // Assign port 4001 or from config
-    server.bindAsync(`0.0.0.0:40002`, grpc.ServerCredentials.createInsecure(), (err, bindPort) => {
+    server.bindAsync(`0.0.0.0:${grpcPort}`, grpc.ServerCredentials.createInsecure(), (err, bindPort) => {
         if (err) {
             console.error("Failed to start gRPC server:", err);
         } else {

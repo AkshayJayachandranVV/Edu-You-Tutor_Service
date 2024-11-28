@@ -1,5 +1,6 @@
 import {TutorService} from "../../application/use-case/tutor";
-import {ITutor, TutorAdditionalInfoPayload , tempId , tutorId, Email} from "../../domain/entities/ITutor";
+import { ServerUnaryCall, sendUnaryData } from '@grpc/grpc-js';
+import {ITutor, TutorAdditionalInfoPayload , tempId , tutorId, Email,FetchTutorRequest,FetchTutorResponse} from "../../domain/entities/ITutor";
 import * as grpc from '@grpc/grpc-js';
 
 class TutorController {
@@ -348,6 +349,33 @@ class TutorController {
             return result
         }catch(error){
             console.log("error in login user usercontroller", error);
+        }
+
+    }
+
+
+    
+async fetchTutor(
+    call: ServerUnaryCall<FetchTutorRequest, FetchTutorResponse>, // gRPC call object
+    callback: sendUnaryData<FetchTutorResponse> // gRPC callback for the response
+  ): Promise<void> {
+        try{
+            const data = call.request
+            console.log(data, "tutor details ");
+
+            const result = await this.tutorService.fetchTutor(data)
+
+            console.log("laaasst",result)
+
+
+            if (!result) {
+                return callback(null, result);
+              }
+            
+              callback(null, result);
+
+        }catch(error){
+            console.error("Error in fetchTutor:", error);
         }
 
     }

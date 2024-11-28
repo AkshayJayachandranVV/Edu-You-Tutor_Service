@@ -1,5 +1,5 @@
 import { TutorRepository } from "../../domain/repositories/TutorRepository";
-import { ITutor, tempId,tutorId , LoginTutor, tutorMinData, Email,profile,TutorAdditionalInfoPayload} from "../../domain/entities/ITutor";
+import { ITutor, tempId,tutorId , FetchTutorResponse, tutorMinData, Email,FetchTutorRequest,TutorAdditionalInfoPayload} from "../../domain/entities/ITutor";
 import { generateOtp } from "../../utils/generateOtp";
 import { sendOtpEmail } from "../../utils/sendEmail";
 import { TemporaryTutor } from "../../model/TempTutor";
@@ -662,6 +662,22 @@ async fetchProfile(data:tutorId): Promise<any> {
       console.log(data, "data in add infpr list"); 
 
       const profile = await this.tutorRepo.fetchProfile(data);
+      console.log(profile, "final data ---------------------------------");
+
+      return profile;
+  } catch (error) {
+      if (error instanceof Error) {
+          throw new Error(`Error fetching cards data: ${error.message}`);
+      }
+      throw error;
+  }
+}
+
+async fetchTutor(data:FetchTutorRequest): Promise<FetchTutorResponse> {
+  try {
+      console.log(data, "data in add infpr list"); 
+
+      const profile = await this.tutorRepo.fetchTutor(data);
       console.log(profile, "final data ---------------------------------");
 
       return profile;

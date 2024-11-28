@@ -1,5 +1,5 @@
 import {ITutorRepository} from './ITutorRepository';
-import {ITutor, ITemporaryTutor,PublicTutorData,TutorAdditionalInfoPayload,tutorId} from '../entities/ITutor'
+import {ITutor, ITemporaryTutor,FetchTutorResponse,FetchTutorRequest,TutorAdditionalInfoPayload,tutorId} from '../entities/ITutor'
 import { Tutor } from "../../model/Tutor";
 import {TemporaryTutor} from '../../model/TempTutor'
 import bcrypt from 'bcryptjs';
@@ -520,6 +520,49 @@ async  addInformation(data: TutorAdditionalInfoPayload): Promise<any> {
       throw new Error(`Error updating tutor information: ${err.message}`);
     }
   }
+
+
+  async fetchTutor(data:FetchTutorRequest): Promise<FetchTutorResponse> {
+    try {
+      const {courseId} = data
+      const tutor = await Tutor.findOne({
+        courses: {
+          $elemMatch: { courseId: courseId }, // Check if courseId exists in courses array
+        },
+      }).select('_id tutorname profile_picture expertise'); // Select only the required fields
+  
+      if (!tutor) {
+        return {
+          tutors: [
+            {
+              name: 'Unknown Tutor', // Default name
+              profile_picture: '', // Default profile picture (empty string)
+              expertise: 'No expertise available', // Default expertise message
+            },
+          ],
+        };
+      }
+  
+      const profilePicture = tutor.profile_picture || '';
+      const expertise = Array.isArray(tutor.expertise)
+        ? tutor.expertise.join(', ')
+        : 'N/A';
+
+        return {
+            tutors: [
+              {
+                name: tutor.tutorname || 'Unknown', // Handle missing name gracefully
+                profile_picture: profilePicture,
+                expertise: expertise,
+              },
+            ],
+          };
+    } catch (error) {
+      const err = error as Error;
+      throw new Error(`Error fetching tutor by course ID: ${err.message}`);
+    }
+  }
+  
 
 
 }
