@@ -1,6 +1,9 @@
 import {TutorService} from "../../application/use-case/tutor";
 import { ServerUnaryCall, sendUnaryData } from '@grpc/grpc-js';
-import {ITutor, TutorAdditionalInfoPayload , tempId , tutorId, Email,FetchTutorRequest,FetchTutorResponse} from "../../domain/entities/ITutor";
+import {ITutor, TutorAdditionalInfoPayload , tempId , tutorId, Email,FetchTutorRequest,FetchTutorResponse,registerData,RegisterTutorResponse,
+    VerifyOtpInput,VerifyOtpUserResponse,LoginTutorrResponse,LoginTutorRequest,ResetPasswordInput,PaginationData,GoogleLoginTutorRequest,GoogleLoginTutorResponse,
+    EditProfileRequest,AddCourseStudentRequest,TutorWithDynamicProperties
+} from "../../domain/entities/ITutor";
 import * as grpc from '@grpc/grpc-js';
 
 class TutorController {
@@ -10,7 +13,10 @@ class TutorController {
         this.tutorService = new TutorService()
     }
 
-    async registerTutor(call: any, callback: any): Promise<void> {
+    async registerTutor(
+        call: grpc.ServerUnaryCall<registerData,RegisterTutorResponse >,
+        callback: grpc.sendUnaryData<RegisterTutorResponse>
+      ): Promise<void>  {
         try {
             console.log("Reached registerTutor method", call.request);
     
@@ -48,7 +54,10 @@ class TutorController {
     }
     
 
-    async verifyOtp(call: any, callback: any): Promise<void> {
+    async verifyOtp(
+        call: grpc.ServerUnaryCall<VerifyOtpInput,VerifyOtpUserResponse >,
+        callback: grpc.sendUnaryData<VerifyOtpUserResponse>
+      ): Promise<void> {
         try {
             console.log("Received gRPC verifyOtp request for tutor", call.request);
     
@@ -67,7 +76,6 @@ class TutorController {
                     tutor_data: result.tutor_data, // Include tutor data if needed
                 });
             } else {
-                // Handle incorrect OTP case or other failures
                 if (result.message === "Incorrect Otp") {
                     return callback(null, {
                         success: false,
@@ -118,7 +126,10 @@ class TutorController {
 
     // }
 
-    async loginTutor(call: any, callback: any): Promise<void> {
+    async loginTutor(
+        call: grpc.ServerUnaryCall<LoginTutorRequest,LoginTutorrResponse >,
+        callback: grpc.sendUnaryData<LoginTutorrResponse>
+      ): Promise<void> {
         try {
             console.log("reached-------------------------------------------", call.request);
     
@@ -139,7 +150,7 @@ class TutorController {
     }
     
 
-    async forgotPassword(data: any){
+    async forgotPassword(data: Email){
         try {
             
             console.log(data, "forgotPassword otp");
@@ -154,7 +165,7 @@ class TutorController {
     }
 
 
-    async forgotOtpVerify(data :Email ){
+    async forgotOtpVerify(data :VerifyOtpInput ){
         try {
             console.log(data,"forgotttt-verify_otp")
 
@@ -167,7 +178,7 @@ class TutorController {
     }
 
 
-    async resetPassword(data :Email ){
+    async resetPassword(data :ResetPasswordInput ){
         try {
             console.log(data,"forgotttt-verify_otp")
 
@@ -180,7 +191,10 @@ class TutorController {
     }
 
 
-    async googleLoginTutor(call: any, callback: any): Promise<void> {
+    async googleLoginTutor(
+        call: grpc.ServerUnaryCall<GoogleLoginTutorRequest,GoogleLoginTutorResponse >,
+        callback: grpc.sendUnaryData<GoogleLoginTutorResponse>
+      ): Promise<void>  {
         try {
             console.log("Reached googleLoginTutor gRPC handler", call.request);
     
@@ -204,7 +218,7 @@ class TutorController {
     }
     
 
-    async totalTutors(data: any){
+    async totalTutors(data: PaginationData){
         try{
             console.log(data, "user edit profile");
 
@@ -218,7 +232,7 @@ class TutorController {
     }
 
 
-    async isBlocked(data: any){
+    async isBlocked(data: Email){
         try{
             console.log(data, "admin isBLocked");
 
@@ -232,7 +246,7 @@ class TutorController {
     }
 
 
-    async editProfile(data: any){
+    async editProfile(data: EditProfileRequest){
         try{
             console.log(data, "user edit profile");
 
@@ -247,7 +261,7 @@ class TutorController {
 
 
 
-    async tutorDetails(data: any){
+    async tutorDetails(data: tutorId){
         try{
             console.log(data, "tutor details ");
 
@@ -261,7 +275,7 @@ class TutorController {
     }
 
 
-    async addCourseStudents(data: any){
+    async addCourseStudents(data: AddCourseStudentRequest){
         try{
             console.log(data, "tutor details ");
 
@@ -275,7 +289,7 @@ class TutorController {
     }
 
 
-    async courseStudents(data: any){
+    async courseStudents(data: FetchTutorRequest){
         try{
             console.log(data, "tutor details ");
 
@@ -316,7 +330,7 @@ class TutorController {
     }
 
 
-    async adminPayout(data:any){
+    async adminPayout(data:TutorWithDynamicProperties){
         try{
             console.log(data, "tutor details ");
 

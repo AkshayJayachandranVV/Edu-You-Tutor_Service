@@ -1,5 +1,8 @@
 import { TutorRepository } from "../../domain/repositories/TutorRepository";
-import { ITutor, tempId,tutorId , FetchTutorResponse, tutorMinData, Email,FetchTutorRequest,TutorAdditionalInfoPayload} from "../../domain/entities/ITutor";
+import { ITutor, tempId,tutorId , FetchTutorResponse, tutorMinData, Email,FetchTutorRequest,TutorAdditionalInfoPayload,RegisterTutorResponse,
+  VerifyOtpInput,TemporaryUser,ResetPasswordInput,ReturnResponse,GoogleLoginTutorRequest,GoogleLoginTutorResponse,totalTutorsResponse,
+  PaginationData,EditProfileRequest,AddCourseStudentRequest,totalStudentsResponse,registerData,TutorWithDynamicProperties
+} from "../../domain/entities/ITutor";
 import { generateOtp } from "../../utils/generateOtp";
 import { sendOtpEmail } from "../../utils/sendEmail";
 import { TemporaryTutor } from "../../model/TempTutor";
@@ -15,7 +18,7 @@ export class TutorService {
         this.tutorRepo = new TutorRepository();
       }
 
-      async registerTutor(tutorData: ITutor): Promise<any> {
+      async registerTutor(tutorData: registerData): Promise<RegisterTutorResponse> {
             try{
                 console.log("reached tutor.ts in tutorcase");
                 const TutorExist = await this.tutorRepo.findByEmail(tutorData.email);
@@ -63,7 +66,7 @@ export class TutorService {
 
 
 
-      async verifyOtp(otpObj: any): Promise<any> {
+      async verifyOtp(otpObj: VerifyOtpInput): Promise<TemporaryUser> {
         try {
           const { otp, id } = otpObj;
           console.log(otp, id);
@@ -346,7 +349,7 @@ export class TutorService {
 
 
 
-  async forgotOtpVerify(otpObj: any): Promise<any> {
+  async forgotOtpVerify(otpObj: VerifyOtpInput): Promise<any> {
 
     try {
 
@@ -385,7 +388,7 @@ export class TutorService {
 
 
 
- async resetPassword(data: any): Promise<any> {
+ async resetPassword(data: ResetPasswordInput): Promise<ReturnResponse> {
   try {
       const {newPassword,email} = data;
       console.log("eneterd to reset . ",newPassword,email)
@@ -417,7 +420,7 @@ export class TutorService {
 }
 
 
-async googleLoginTutor(data: any): Promise<any> {
+async googleLoginTutor(data: GoogleLoginTutorRequest): Promise<GoogleLoginTutorResponse> {
   try {
       const email = data.email;
       const tutorname = data.fullname;
@@ -448,7 +451,7 @@ async googleLoginTutor(data: any): Promise<any> {
 }
 
 
-async totalTutors(data: any): Promise<ITutor[]| null> {
+async totalTutors(data: PaginationData): Promise<totalTutorsResponse> {
   try {
       console.log(data, "data in students list");
       
@@ -464,7 +467,7 @@ async totalTutors(data: any): Promise<ITutor[]| null> {
 }
 
 
-async isBlocked(data: Email): Promise<any> {
+async isBlocked(data: Email): Promise<ReturnResponse> {
   try {
       console.log(data, "data in students list");
       const {email} = data
@@ -481,7 +484,7 @@ async isBlocked(data: Email): Promise<any> {
 }
 
 
-async editProfile(data: any): Promise<any> {
+async editProfile(data: any): Promise<ITutor | null> {
   try {
       console.log(data, "data in edit profile");
       // let profile_pic_url: string = '';
@@ -495,9 +498,9 @@ async editProfile(data: any): Promise<any> {
       // console.log(profile_pic_url, 'Profile picture URL after upload');
 
       // Extract relevant fields from `data.data`
-      const { tutorname, email, phone, about,profile_picture} = data.data;
+      const { name, email, phone, about,profile_picture} = data.data;
 
-      console.log(tutorname, email, phone, about,profile_picture);
+      console.log(name, email, phone, about,profile_picture);
 
       // Update the user profile with the provided data (image is now the S3 key)
       let user = await this.tutorRepo.editProfile(data.data);
@@ -518,7 +521,7 @@ async editProfile(data: any): Promise<any> {
 }
 
 
-async tutorDetails(data:tutorId ): Promise<any> {
+async tutorDetails(data:tutorId ): Promise<ITutor | null> {
   try {
       console.log(data, "data in students list");
       const {tutorId} = data
@@ -534,7 +537,7 @@ async tutorDetails(data:tutorId ): Promise<any> {
   }
 }
 
-async addCourseStudents(data:any ): Promise<any> {
+async addCourseStudents(data:AddCourseStudentRequest ): Promise<ITutor | null> {
   try {
       console.log(data, "data in students list");
       
@@ -550,24 +553,27 @@ async addCourseStudents(data:any ): Promise<any> {
 }
 
 
-async courseStudents(data: { courseId: string }): Promise<any> {
+async courseStudents(data: { courseId: string }): Promise<totalStudentsResponse | null> {
   try {
-    console.log(data, "data in students list"); // Check if data is correctly logged as an object
+    console.log(data, "data in students list"); 
     const { courseId } = data;
-    console.log(courseId)
-    const studentslist = await this.tutorRepo.courseStudents( courseId ); // Pass as an object
-    return {success:true,students:studentslist};
+    console.log(courseId);
+    const studentslist = await this.tutorRepo.courseStudents(courseId);
 
+    const students: string[] = Array.isArray(studentslist) ? studentslist : []; 
+
+    return { success: true, students };
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Error editing profile: ${error.message}`);
+      throw new Error(`Error fetching students: ${error.message}`);
     }
     throw error;
   }
 }
 
 
-async cardsData(data: tutorId): Promise<any> {
+
+async cardsData(data: tutorId){
   try {
       console.log(data, "data in cardsData list"); // Check if data is correctly logged as an object
       const { tutorId } = data;
@@ -594,7 +600,7 @@ async cardsData(data: tutorId): Promise<any> {
 
 
 
-async tutorPieGraph(data:tutorId): Promise<any> {
+async tutorPieGraph(data:tutorId) {
   try {
       console.log(data, "data in cardsData list"); // Check if data is correctly logged as an object
       const { tutorId } = data;
@@ -620,7 +626,7 @@ async tutorPieGraph(data:tutorId): Promise<any> {
 }
 
 
-async adminPayout(data:any): Promise<any> {
+async adminPayout(data:TutorWithDynamicProperties) {
   try {
       console.log(data, "data in cardsData list"); // Check if data is correctly logged as an object
       const { tutorId } = data;
@@ -640,7 +646,7 @@ async adminPayout(data:any): Promise<any> {
 
 
 
-async addInformation(data:TutorAdditionalInfoPayload): Promise<any> {
+async addInformation(data:TutorAdditionalInfoPayload): Promise<ITutor | null> {
   try {
       console.log(data, "data in add infpr list"); 
 
@@ -657,7 +663,7 @@ async addInformation(data:TutorAdditionalInfoPayload): Promise<any> {
 }
 
 
-async fetchProfile(data:tutorId): Promise<any> {
+async fetchProfile(data:tutorId): Promise<ITutor | null> {
   try {
       console.log(data, "data in add infpr list"); 
 

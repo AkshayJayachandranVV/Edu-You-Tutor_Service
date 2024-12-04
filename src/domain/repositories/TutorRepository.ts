@@ -1,5 +1,8 @@
 import {ITutorRepository} from './ITutorRepository';
-import {ITutor, ITemporaryTutor,FetchTutorResponse,FetchTutorRequest,TutorAdditionalInfoPayload,tutorId} from '../entities/ITutor'
+import { Types } from 'mongoose';
+import {ITutor, ITemporaryTutor,FetchTutorResponse,FetchTutorRequest,TutorAdditionalInfoPayload,tutorId,PaginationData,TutorProfile,
+    AddCourseStudentRequest,totalTutorsResponse,TutorWithDynamicProperties
+} from '../entities/ITutor'
 import { Tutor } from "../../model/Tutor";
 import {TemporaryTutor} from '../../model/TempTutor'
 import bcrypt from 'bcryptjs';
@@ -151,7 +154,7 @@ async googleSave(tutor: ITutor) : Promise<ITutor> {
 }
 
 
-async totalTutors(data:any) : Promise<any> {
+async totalTutors(data:PaginationData) : Promise<totalTutorsResponse> {
     try {
         console.log(' total tutors  in tutorrepository reached')
 
@@ -208,11 +211,11 @@ async isBlocked(email: string): Promise<{ success: boolean; message: string }> {
 
 
 
-async editProfile(tutor: any): Promise<any> {
+async editProfile(tutor: any): Promise<ITutor> {
     try {
         console.log('edit profile in userrepository reached');
 
-        const { name, email, phone, about, qualifications, profile_picture, cv } = tutor;
+        const { name, email, phone, about, qualifications, profile_picture, cv,expertise} = tutor;
 
         // Helper function to extract the S3 key from a URL
         const extractS3Key = (url: string): string => {
@@ -226,6 +229,8 @@ async editProfile(tutor: any): Promise<any> {
             try {
                 // Ensure qualifications are parsed correctly
                 const parsedQualifications = JSON.parse(qualifications);
+
+               
 
                 qualificationsData = parsedQualifications.map((qual: any) => ({
                     qualification: qual.title,
@@ -243,14 +248,17 @@ async editProfile(tutor: any): Promise<any> {
             throw new Error('Qualifications must be an array or a JSON string');
         }
 
+        const parsedExpertise = JSON.parse(expertise);
+
         // Prepare the update payload with extracted keys
         const updatePayload: any = {
             tutorname: name,
             phone,
             about,
             qualifications: qualificationsData,
+            expertise:parsedExpertise,
             profile_picture: extractS3Key(profile_picture), // Extract S3 key for profile picture
-            cv: extractS3Key(cv), // Extract S3 key for CV
+            cv: extractS3Key(cv), 
         };
 
         // Update tutor profile in the database
@@ -263,10 +271,16 @@ async editProfile(tutor: any): Promise<any> {
 
         console.log('Fetched updated tutor data:', tutorData);
 
-        return tutorData;
+        // Handle the case where no tutor is found
+        if (!tutorData) {
+            throw new Error('Tutor not found');
+        }
+
+        // Cast the result to ITutor and return
+        return tutorData as ITutor;
     } catch (error) {
         console.error('Error in save userRepo:', error);
-        throw new Error(`Error updating tutor profile:`);
+        throw new Error(`Error updating tutor profile: ${error instanceof Error ? error.message : error}`);
     }
 }
 
@@ -287,13 +301,23 @@ async tutorDetails(tutorId: string): Promise<ITutor | null> {
 }
 
 
-async addCourseStudents(data: any): Promise<any> {
+async addCourseStudents(data: AddCourseStudentRequest): Promise<ITutor> {
     try {
         const { tutorId, userId, courseId } = data;
-        console.log('Reached addCourseStudents with data:', data);
+
+        // Convert strings to ObjectId
+        const tutorObjectId = new Types.ObjectId(tutorId);
+        const userObjectId = new Types.ObjectId(userId);
+        const courseObjectId = new Types.ObjectId(courseId);
+
+        console.log('Reached addCourseStudents with ObjectId data:', {
+            tutorObjectId,
+            userObjectId,
+            courseObjectId,
+        });
 
         // Find the tutor by tutorId
-        const tutor = await Tutor.findById(tutorId);
+        const tutor = await Tutor.findById(tutorObjectId);
 
         if (!tutor) {
             throw new Error('Tutor not found');
@@ -304,23 +328,25 @@ async addCourseStudents(data: any): Promise<any> {
         }
 
         // Check if the course already exists in the tutor's courses array
-        const courseIndex = tutor.courses.findIndex((course: any) => course.courseId.toString() === courseId);
+        const courseIndex = tutor.courses.findIndex(
+            (course) => course.courseId.equals(courseObjectId)
+        );
 
         if (courseIndex > -1) {
-            // Course already exists, check if the student is already in the students array
+            // Course exists, check if student is already in the students array
             const studentsArray = tutor.courses[courseIndex].students;
 
-            if (!studentsArray.includes(userId)) {
-                // If student is not already enrolled, add the studentId
-                studentsArray.push(userId);
+            if (!studentsArray.some((student) => student.equals(userObjectId))) {
+                // Add the student if not already enrolled
+                studentsArray.push(userObjectId);
             } else {
                 console.log('Student is already enrolled in the course');
             }
         } else {
-            // Course does not exist, add a new course object with courseId and the studentId in students array
+            // Course does not exist, add a new one
             tutor.courses.push({
-                courseId,
-                students: [userId]  // Add the studentId to the students array
+                courseId: courseObjectId,
+                students: [userObjectId],
             });
         }
 
@@ -328,7 +354,7 @@ async addCourseStudents(data: any): Promise<any> {
         const updatedTutor = await tutor.save();
         console.log('Updated tutor:', updatedTutor);
 
-        return updatedTutor;
+        return updatedTutor as ITutor;
     } catch (error) {
         const err = error as Error;
         console.error('Error in addCourseStudents:', err.message);
@@ -449,11 +475,11 @@ async tutorPieGraph(tutorId: string) {
 
 
 
-async adminPayout(data: Array<{ tutorId: string; [key: string]: any }>) {
+async adminPayout(data:TutorWithDynamicProperties) {
     console.log('Reached userRepository with tutorId array:', data);
     try {
         // Map over each item in data array and add tutor name
-        const addedData = await Promise.all(data.map(async (item) => {
+        const addedData = await Promise.all(data.map(async (item:any) => {
             // Fetch tutor document from the database using tutorId
             const tutor = await Tutor.findOne({ _id: item.tutorId });
 
@@ -480,7 +506,7 @@ async adminPayout(data: Array<{ tutorId: string; [key: string]: any }>) {
 
 
 
-async  addInformation(data: TutorAdditionalInfoPayload): Promise<any> {
+async  addInformation(data: TutorAdditionalInfoPayload): Promise<ITutor | null> {
     try {
       const { id: id, profilePicture, bio, cv, expertise, qualifications } = data;
   
@@ -510,7 +536,7 @@ async  addInformation(data: TutorAdditionalInfoPayload): Promise<any> {
 
 
 
-  async  fetchProfile(data: tutorId): Promise<any> {
+  async  fetchProfile(data: tutorId): Promise<ITutor | null> {
     try {
         const {tutorId} = data
         const tutor = await Tutor.findOne({_id:tutorId}).select('-password').exec()

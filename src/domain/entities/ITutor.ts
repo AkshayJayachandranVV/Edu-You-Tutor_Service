@@ -18,17 +18,19 @@ export interface ITutor {
   tutorname: string;
   email: string;
   phone?: string;
-  password: string;
+  password: string;        
   profile_picture?: string;
-  createdAt?: Date; // Updated to align with schema's 'createdAt' field
-  about?: string;   // Optional field as per schema
-  isBlocked?: boolean; // Optional field as per schema
-  courses?: { // Array of courses with courseId and students array
-      courseId: Types.ObjectId; // Assuming courseId is an ObjectId
-      students: Types.ObjectId[]; // Array of student ObjectIds
-  }[];
   expertise: string[];
+  courses?: {
+    courseId: mongoose.Types.ObjectId;
+    students: mongoose.Types.ObjectId[];
+  }[];
+  about?: string;
+  isBlocked?: boolean;
 }
+
+export interface ITutorDocument extends ITutor, Document<mongoose.Types.ObjectId> {}
+
 
 
  export interface PublicTutorData {
@@ -58,14 +60,66 @@ export interface ITutor {
   export interface ITemporaryTutor extends Document {
     otp: string;
     tutorData?: ITutor;
-    createdAt: Date;  // Consistent naming with Mongoose convention
+    createdAt: Date;  
 }
 
+
+export interface GoogleLoginTutorRequest {
+  email: string;
+  fullname: string;
+}
+
+export interface GoogleLoginTutorResponse {
+  success: boolean;
+  message: string;
+  tutor_data?: ITutor; 
+  role?:string;
+}
 
 export interface registerData {
   tutorname: string;
   email: string;
   password: string;
+}
+
+export interface RegisterTutorResponse {
+  success: boolean;
+  message: string;
+  forgotPass?: boolean;
+  email?: string;
+  tempId?: string;
+  tutorData?:ITutor;
+}
+
+export interface VerifyOtpInput {
+  otp: string;
+  id: string;
+}
+
+export interface VerifyOtpUserResponse {
+  message: string;
+  success: boolean;
+  tutor_data?: ITutor; 
+}
+
+
+export interface LoginTutorRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginTutorrResponse {
+  success: boolean;
+  message: string;
+  role: string;
+  tutorData?: ITutor; 
+}
+
+
+export interface TemporaryUser {
+  success:boolean;
+  message:string;
+  tutor_data?:ITutor;
 }
 
 export interface tempId{
@@ -126,9 +180,90 @@ export interface FormDataPayload {
   email: string;
   phone: string;
   about: string;
-  qualifications: Qualification2[]; // Array of qualifications
-  profile_picture?: string; // Optional, since it's only appended if available
-  cv?: string; // Optional, since it's only appended if available
-  profileImageFile?: File; // Optional, file input for profile image
+  qualifications: Qualification2[]; 
+  profile_picture?: string; 
+  cv?: string; 
+  profileImageFile?: File;
   cvFile?: File; 
 }
+
+
+export interface PaginationData {
+  skip: number;
+  limit: number;
+}
+
+export interface TutorWithDynamicProperties {
+  tutorId: string;        // The tutor's unique identifier
+  [key: string]: any;     // Allow any additional properties with any key and value
+}
+
+
+
+export interface TutorProfile {
+  tutorname: string; // Full name of the tutor
+  email: string;
+  phone?: string; // Optional
+  about?: string; // Optional
+  qualifications?: string[]; // Optional
+  profile_picture: string; // Profile picture URL or S3 key
+  cv?: string; // Optional
+}
+
+
+
+
+export interface AddCourseStudentRequest {
+  tutorId: string;
+  userId: string;
+  courseId: string;
+}
+
+
+export interface ResetPasswordInput {
+  newPassword: string;
+  email: string;
+}
+
+export interface totalTutorsResponse {
+  totalCount:number;
+  tutors:ITutor[]
+} 
+
+export interface totalStudentsResponse {
+  success:boolean;
+  students:string[]
+} 
+
+
+
+export interface ReturnResponse {
+  message:string;
+  success:boolean;
+}
+
+
+export interface GoogleLoginTutorRequest {
+  email: string;
+  fullname: string;
+}
+
+export interface GoogleLoginTutorResponse {
+  success: boolean;
+  message: string;
+  tutor_data?: ITutor; 
+  role?:string;
+}
+
+
+export interface EditProfileRequest {
+  data: {
+    name: string;
+    email: string;
+    phone?: string;
+    about?: string;
+    profile_picture?: string; 
+  };
+}
+
+
