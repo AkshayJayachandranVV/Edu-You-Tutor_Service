@@ -38,7 +38,7 @@ export const sendOtpEmail = async (to: string, otp: string): Promise<void> => {
             </div>
             <div style="text-align: center; padding-top: 20px; color: #999999; font-size: 14px;">
                 <p>&copy; 2024 Your Company. All rights reserved.</p>
-                <p><a href="mailto:darsandinesh100@gmail.com" style="color: #0073e6; text-decoration: none;">darsandinesh100@gmail.com</a></p>
+                <p><a href="mailto:akshayjayachandranvv@gmail.com" style="color: #0073e6; text-decoration: none;">darsandinesh100@gmail.com</a></p>
             </div>
         </div>`,
         attachments: [
