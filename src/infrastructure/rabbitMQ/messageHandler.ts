@@ -117,6 +117,12 @@ export default class MessageHandlers {
                 console.log("data reached ",response);
                 break; 
 
+            case 'tutor-my-course' :
+                console.log('Handling operation',operations,data)
+                response = await tutorController.tutorMyCourse(data)
+                console.log("data reached ",response);
+                break; 
+
         }
 
         await RabbitMQClient.produce(response,correlationId,replyTo)

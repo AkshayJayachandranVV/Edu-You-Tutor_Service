@@ -548,6 +548,28 @@ async  addInformation(data: TutorAdditionalInfoPayload): Promise<ITutor | null> 
   }
 
 
+  async tutorMyCourse(data: { userId: string }): Promise<any> {
+    try {
+      const { userId } = data;
+  
+      const tutor = await Tutor.findOne({ _id: userId }, { "courses.courseId": 1 });
+  
+      if (!tutor) {
+        return null;    
+      }
+  
+      const courseIds = tutor.courses?.map((course) => course.courseId.toString()) || [];
+  
+      return courseIds;
+    } catch (error) {
+      const err = error as Error;
+      throw new Error(`Error fetching tutor courses: ${err.message}`);
+    }
+  }
+  
+  
+
+
   async fetchTutor(data:FetchTutorRequest): Promise<FetchTutorResponse> {
     try {
       const {courseId} = data

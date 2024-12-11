@@ -368,6 +368,19 @@ class TutorController {
     }
 
 
+    async tutorMyCourse(data:any){
+        try{
+            console.log(data, "tutor details ");
+
+            const result = await this.tutorService.tutorMyCourse(data)
+            return result
+        }catch(error){
+            console.log("error in login user usercontroller", error);
+        }
+
+    }
+
+
     
 async fetchTutor(
     call: ServerUnaryCall<FetchTutorRequest, FetchTutorResponse>, // gRPC call object
@@ -393,6 +406,9 @@ async fetchTutor(
         }
 
     }
+
+
+
 
 
 }

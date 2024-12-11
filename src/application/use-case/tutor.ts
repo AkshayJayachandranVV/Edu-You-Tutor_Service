@@ -696,6 +696,23 @@ async fetchTutor(data:FetchTutorRequest): Promise<FetchTutorResponse> {
 }
 
 
+async tutorMyCourse(data:any): Promise<any> {
+  try {
+      console.log(data, "data in add infpr list"); 
+
+      const profile = await this.tutorRepo.tutorMyCourse(data);
+      console.log(profile, "final data ---------------------------------");
+
+      return profile;
+  } catch (error) {
+      if (error instanceof Error) {
+          throw new Error(`Error fetching cards data: ${error.message}`);
+      }
+      throw error;
+  }
+}
+
+
 }
 
 
